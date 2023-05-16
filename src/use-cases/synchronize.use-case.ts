@@ -38,7 +38,6 @@ function pushDuplicateMovementIdInReasonsAndGetUniqueOnes(
 ): Movement[] {
   const { duplicates, uniques } = findDuplicateItems(movements);
   if (duplicates.length) {
-    console.log(duplicates);
     duplicates.forEach((duplicateMovement) => {
       reasons.push(`duplicate id ${duplicateMovement.id}`);
     });
