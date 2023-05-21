@@ -38,7 +38,7 @@ Feature: Dougs Synchronization
             | 05-10-2023 | 200     |
 
         When I synchronize
-        Then I should have failure with reason missing 300 on 10/05/2023
+        Then I should have failure with reason missing 300 on checkpoint at 10/05/2023
 
     Scenario: Synchronize missing movement with negative amount
         Given following movements :
@@ -53,7 +53,7 @@ Feature: Dougs Synchronization
             | 05-10-2023 | -500    |
 
         When I synchronize
-        Then I should have failure with reason missing -400 on 10/05/2023
+        Then I should have failure with reason missing -400 on checkpoint at 10/05/2023
 
     Scenario: Synchronize missing amount movement
         Given following movements :

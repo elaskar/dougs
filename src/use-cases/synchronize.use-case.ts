@@ -7,6 +7,16 @@ export type SynchronizationResult = {
   reasons: string[];
 };
 
+function getFormattedReasonForMissingLastCheckpoint(
+  balance: number,
+  amountWithoutCheckpoint: number,
+  maxDate: Date,
+) {
+  return `missing checkpoint at ${
+    balance + amountWithoutCheckpoint
+  } after ${format(maxDate, 'dd/MM/yyyy')}`;
+}
+
 export class SynchronizeUseCase {
   public handle(
     movements: Movement[],
@@ -31,11 +41,16 @@ export class SynchronizeUseCase {
         );
 
       balance += sumAllMovementsAmount(movementsBeforeCurrentCheckpoint);
-      const movementWithoutAmount = movementsBeforeCurrentCheckpoint.find(
-        (movement) => movement.amount === 0 || !movement.amount,
+      const movementWithoutAmount = getMovementWithoutAmount(
+        movementsBeforeCurrentCheckpoint,
       );
       const diffBetweenBalanceAndCheckpoint = checkpoint.amount - balance;
-      if (movementWithoutAmount && diffBetweenBalanceAndCheckpoint !== 0) {
+      if (
+        isMissingAmountOnMovementAndInBalance(
+          movementWithoutAmount,
+          diffBetweenBalanceAndCheckpoint,
+        )
+      ) {
         success = false;
         reasons.push(
           getFormattedReasonOnMissingMovementAmount(
@@ -44,7 +59,12 @@ export class SynchronizeUseCase {
           ),
         );
       }
-      if (!movementWithoutAmount && diffBetweenBalanceAndCheckpoint !== 0) {
+      if (
+        isMissingAmountOnBalanceOnly(
+          movementWithoutAmount,
+          diffBetweenBalanceAndCheckpoint,
+        )
+      ) {
         success = false;
         reasons.push(
           getFormattedReasonOnMissingAmountBetweenTwoCheckpoints(
@@ -67,9 +87,11 @@ export class SynchronizeUseCase {
       );
       success = false;
       reasons.push(
-        `missing checkpoint at ${
-          balance + amountWithoutCheckpoint
-        } after ${format(maxDate, 'dd/MM/yyyy')}`,
+        getFormattedReasonForMissingLastCheckpoint(
+          balance,
+          amountWithoutCheckpoint,
+          maxDate,
+        ),
       );
     }
     return {
@@ -112,6 +134,10 @@ function orderByDate(arrayToOrder: Checkpoint[]): Checkpoint[] {
   return arrayToOrder;
 }
 
+function getFormattedReasonForDuplicatedMovement(duplicateMovement: Movement) {
+  return `duplicate id ${duplicateMovement.id}`;
+}
+
 function pushDuplicateMovementIdInReasonsAndGetUniqueOnes(
   movements: Movement[],
   reasons: string[],
@@ -119,7 +145,7 @@ function pushDuplicateMovementIdInReasonsAndGetUniqueOnes(
   const { duplicates, uniques } = findDuplicateItems(movements);
   if (duplicates.length) {
     duplicates.forEach((duplicateMovement) => {
-      reasons.push(`duplicate id ${duplicateMovement.id}`);
+      reasons.push(getFormattedReasonForDuplicatedMovement(duplicateMovement));
     });
   }
   return uniques;
@@ -167,5 +193,27 @@ function getFormattedReasonOnMissingAmountBetweenTwoCheckpoints(
   checkpointDate: Date,
   amountMissing: number,
 ): string {
-  return `missing ${amountMissing} on ${format(checkpointDate, 'dd/MM/yyyy')}`;
+  return `missing ${amountMissing} on checkpoint at ${format(checkpointDate, 'dd/MM/yyyy')}`;
+}
+
+function getMovementWithoutAmount(
+  movementsBeforeCurrentCheckpoint: Movement[],
+) {
+  return movementsBeforeCurrentCheckpoint.find(
+    (movement) => movement.amount === 0 || !movement.amount,
+  );
+}
+
+function isMissingAmountOnMovementAndInBalance(
+  movementWithoutAmount: Movement,
+  diffBetweenBalanceAndCheckpoint: number,
+) {
+  return movementWithoutAmount && diffBetweenBalanceAndCheckpoint !== 0;
+}
+
+function isMissingAmountOnBalanceOnly(
+  movementWithoutAmount: Movement,
+  diffBetweenBalanceAndCheckpoint: number,
+) {
+  return !movementWithoutAmount && diffBetweenBalanceAndCheckpoint !== 0;
 }
