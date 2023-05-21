@@ -69,39 +69,36 @@ describe('AppController (e2e)', () => {
 
   it('Post Movements Synchro missing movements', () => {
     return request(app.getHttpServer())
-        .post('/movements/validation')
-        .send({
-
-          balances: [
-            {
-              date: '09/05/2023',
-              balance: 0,
-            },
-            {
-              date: '11/05/2023',
-              balance: 50,
-            },
-          ],
-        })
-        .expect(400);
+      .post('/movements/validation')
+      .send({
+        balances: [
+          {
+            date: '09/05/2023',
+            balance: 0,
+          },
+          {
+            date: '11/05/2023',
+            balance: 50,
+          },
+        ],
+      })
+      .expect(400);
   });
 
   it('Post Movements missing balances', () => {
     return request(app.getHttpServer())
-        .post('/movements/validation')
-        .send({
-          movements: [
-            {
-              id: 1,
-              date: '10/05/2023',
-              amount: 100,
-              wording: 'my first movement',
-            },
-          ],
-          balances: [
-
-          ],
-        })
-        .expect(400);
+      .post('/movements/validation')
+      .send({
+        movements: [
+          {
+            id: 1,
+            date: '10/05/2023',
+            amount: 100,
+            wording: 'my first movement',
+          },
+        ],
+        balances: [],
+      })
+      .expect(400);
   });
 });
